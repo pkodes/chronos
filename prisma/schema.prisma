@@ -1,0 +1,63 @@
+// prisma/schema.prisma
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Job {
+  id        String   @id @default(uuid())
+  name      String
+  type      JobType  // WEBHOOK, COMMAND, etc.
+  schedule  String   // Cron expression or "once"
+  enabled   Boolean  @default(true)
+  
+  // Critical for scheduler performance
+  nextRunAt DateTime?
+  
+  // Payload for job execution
+  payload   Json?
+  
+  // Timestamps
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  
+  // Relations
+  executions JobExecution[]
+  
+  @@map("jobs")
+}
+
+model JobExecution {
+  id        String   @id @default(uuid())
+  status    ExecutionStatus // PENDING, RUNNING, SUCCESS, FAILED
+  output    String?
+  error     String?
+  
+  // Timestamps
+  scheduledAt DateTime
+  startedAt   DateTime?
+  completedAt DateTime?
+  
+  // Relations
+  jobId   String
+  job     Job    @relation(fields: [jobId], references: [id], onDelete: Cascade)
+  
+  @@map("job_executions")
+}
+
+enum JobType {
+  WEBHOOK
+  COMMAND
+  EMAIL
+}
+
+enum ExecutionStatus {
+  PENDING
+  RUNNING
+  SUCCESS
+  FAILED
+}
