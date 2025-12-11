@@ -12,6 +12,7 @@ class Scheduler {
     this.isRunning = false;
   }
 
+  
   async start() {
     if (this.isRunning) {
       console.log('⚠️  Scheduler already running');
